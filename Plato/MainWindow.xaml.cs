@@ -11,14 +11,15 @@ namespace Plato
     /// </summary>
     public partial class MainWindow : Window
     {
-        private readonly HubConnection connection;
+        private readonly HubConnection _connection;
+        private string? _token;
 
         public MainWindow()
         {
             InitializeComponent();
-            string? _token = GetAuthenticationToken();
+            _token = null;
 
-            connection = new HubConnectionBuilder()
+            _connection = new HubConnectionBuilder()
                 .WithUrl("http://localhost:5000/chat", options =>
                 {
                     options.AccessTokenProvider = () => Task.FromResult(_token);
@@ -26,9 +27,9 @@ namespace Plato
                 .Build();
         }
 
-        private async void ConnectButton_Click(object sender, RoutedEventArgs e)
+        private async void LoginButton_Click(object sender, RoutedEventArgs e)
         {
-            connection.On<string, string>("ReceiveMessage", (user, message) =>
+            _connection.On<string, string>("ReceiveMessage", (user, message) =>
             {
                 this.Dispatcher.Invoke(() =>
                 {
@@ -39,11 +40,29 @@ namespace Plato
 
             try
             {
-                await connection.StartAsync();
+                var loginRequest = new LoginRequest()
+                {
+                    UserName = userTextBox.Text,
+                    Password = passwordBox.Password
+                };
 
-                messagesList.Items.Add("Connection started");
-                connectButton.IsEnabled = false;
-                sendMessageButton.IsEnabled = true;
+                _token = await GetAuthenticationToken(loginRequest);
+
+                if (_token != null)
+                {
+                    await _connection.StartAsync();
+
+                    messagesList.Items.Add("Connection started");
+                    loginButton.Visibility = Visibility.Hidden;
+                    userTextBox.Visibility = Visibility.Hidden;
+                    passwordBox.Visibility = Visibility.Hidden;
+                    userLabel.Visibility = Visibility.Hidden;
+                    passwordLabel.Visibility = Visibility.Hidden;
+
+                    sendMessageButton.Visibility = Visibility.Visible;
+                    messageTextBox.Visibility = Visibility.Visible;
+                    messagesList.Visibility = Visibility.Visible;
+                }
             }
             catch (Exception ex)
             {
@@ -55,7 +74,7 @@ namespace Plato
         {
             try
             {
-                await connection.InvokeAsync("SendMessageToCaller", userTextBox.Text, messageTextBox.Text);
+                await _connection.InvokeAsync("SendMessageToCaller", userTextBox.Text, messageTextBox.Text);
             }
             catch (Exception ex)
             {
@@ -63,18 +82,19 @@ namespace Plato
             }
         }
 
-        private string GetAuthenticationToken()
+        private static async Task<string?> GetAuthenticationToken(LoginRequest loginRequest)
         {
-            var loginRequest = new LoginRequest()
-            {
-                UserName = "b4ry",
-                Password = "test"
-            };
-
             var content = new StringContent(JsonConvert.SerializeObject(loginRequest), Encoding.UTF8, "application/json");
-            var httpResponse = new HttpClient().PostAsync("http://localhost:5126/api/Authentication", content).Result;
+            var httpResponse = await new HttpClient().PostAsync("http://localhost:5126/api/Authentication", content);
 
-            return httpResponse.Content.ReadAsStringAsync().Result;
+            var httpResponseContent = await httpResponse.Content.ReadAsStringAsync();
+
+            if(httpResponse.IsSuccessStatusCode)
+            {
+                return httpResponseContent;
+            }
+
+            return null;
         }
 
         private sealed class LoginRequest
