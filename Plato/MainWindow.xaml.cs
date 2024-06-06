@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
-using Newtonsoft.Json;
-using System.Net.Http;
-using System.Text;
+using Plato.Constants;
+using Plato.DTOs;
+using Plato.ExternalServices;
 using System.Windows;
 
 namespace Plato
@@ -17,7 +17,6 @@ namespace Plato
         public MainWindow()
         {
             InitializeComponent();
-            _token = null;
 
             _connection = new HubConnectionBuilder()
                 .WithUrl("http://localhost:5000/chat", options =>
@@ -25,11 +24,8 @@ namespace Plato
                     options.AccessTokenProvider = () => Task.FromResult(_token);
                 })
                 .Build();
-        }
 
-        private async void LoginButton_Click(object sender, RoutedEventArgs e)
-        {
-            _connection.On<string, string>("ReceiveMessage", (user, message) =>
+            _connection.On<string, string>(ChatHubEndpointNames.ReceiveMessage, (user, message) =>
             {
                 this.Dispatcher.Invoke(() =>
                 {
@@ -37,7 +33,10 @@ namespace Plato
                     messagesList.Items.Add(newMessage);
                 });
             });
+        }
 
+        private async void LoginButton_Click(object sender, RoutedEventArgs e)
+        {
             try
             {
                 var loginRequest = new LoginRequest()
@@ -46,13 +45,12 @@ namespace Plato
                     Password = passwordBox.Password
                 };
 
-                _token = await GetAuthenticationToken(loginRequest);
+                _token = await CerberusApi.GetAuthenticationToken(loginRequest);
 
                 if (_token != null)
                 {
                     await _connection.StartAsync();
 
-                    messagesList.Items.Add("Connection started");
                     loginButton.Visibility = Visibility.Hidden;
                     userTextBox.Visibility = Visibility.Hidden;
                     passwordBox.Visibility = Visibility.Hidden;
@@ -74,33 +72,12 @@ namespace Plato
         {
             try
             {
-                await _connection.InvokeAsync("SendMessageToCaller", userTextBox.Text, messageTextBox.Text);
+                await _connection.InvokeAsync(ChatHubEndpointNames.SendMessageToCaller, userTextBox.Text, messageTextBox.Text);
             }
             catch (Exception ex)
             {
                 messagesList.Items.Add(ex.Message);
             }
-        }
-
-        private static async Task<string?> GetAuthenticationToken(LoginRequest loginRequest)
-        {
-            var content = new StringContent(JsonConvert.SerializeObject(loginRequest), Encoding.UTF8, "application/json");
-            var httpResponse = await new HttpClient().PostAsync("http://localhost:5126/api/Authentication", content);
-
-            var httpResponseContent = await httpResponse.Content.ReadAsStringAsync();
-
-            if(httpResponse.IsSuccessStatusCode)
-            {
-                return httpResponseContent;
-            }
-
-            return null;
-        }
-
-        private sealed class LoginRequest
-        {
-            public required string UserName { get; set; }
-            public required string Password { get; set; }
         }
     }
 }
