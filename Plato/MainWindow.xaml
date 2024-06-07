@@ -8,14 +8,15 @@
         Title="Plato" Height="450" Width="400">
     <Grid>
         <!-- Message content -->
-        <Button x:Name="sendMessageButton" Content="Send Message" HorizontalAlignment="Left" Margin="10,300,0,0" VerticalAlignment="Top" Width="311" Click="SendMessageButton_Click" Height="42" Visibility="Hidden"/>
-        <TextBox x:Name="messageTextBox" HorizontalAlignment="Left" Height="42" Margin="10,253,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="311" Visibility="Hidden"/>
+        <Button x:Name="sendMessageButton" Content="Send Message" HorizontalAlignment="Left" Margin="10,355,0,0" VerticalAlignment="Top" Width="311" Click="SendMessageButton_Click" Height="42" Visibility="Hidden"/>
+        <TextBox x:Name="userTextBox" HorizontalAlignment="Left" Height="42" Margin="10,253,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="311" Visibility="Hidden"/>
+        <TextBox x:Name="messageTextBox" HorizontalAlignment="Left" Height="42" Margin="10,305,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="311" Visibility="Hidden"/>
         <ListBox x:Name="messagesList" HorizontalAlignment="Left" Height="230" Margin="10,18,0,0" VerticalAlignment="Top" Width="311" RenderTransformOrigin="-0.304,0.109" BorderThickness="1" BorderBrush="Gainsboro" Visibility="Hidden"/>
 
         <Button x:Name="loginButton" Content="Login" HorizontalAlignment="Left" Margin="254,188,0,0" VerticalAlignment="Top" Width="95" Click="LoginButton_Click" Height="41" />
 
         <!-- User content-->
-        <TextBox x:Name="userTextBox" VerticalContentAlignment="Center" HorizontalAlignment="Left" Height="40" Margin="114,163,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="123"/>
+        <TextBox x:Name="loginUserTextBox" VerticalContentAlignment="Center" HorizontalAlignment="Left" Height="40" Margin="114,163,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="123"/>
         <Label x:Name="userLabel" Content="User" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Left" Height="40" Margin="71,163,0,0" VerticalAlignment="Top" Width="38" FontWeight="Bold"/>
 
         <PasswordBox x:Name="passwordBox" VerticalContentAlignment="Center" HorizontalAlignment="Left" Height="40" Margin="114,213,0,0" VerticalAlignment="Top" Width="123"/>

@@ -41,7 +41,7 @@ namespace Plato
             {
                 var loginRequest = new LoginRequest()
                 {
-                    UserName = userTextBox.Text,
+                    UserName = loginUserTextBox.Text,
                     Password = passwordBox.Password
                 };
 
@@ -52,13 +52,14 @@ namespace Plato
                     await _connection.StartAsync();
 
                     loginButton.Visibility = Visibility.Hidden;
-                    userTextBox.Visibility = Visibility.Hidden;
+                    loginUserTextBox.Visibility = Visibility.Hidden;
                     passwordBox.Visibility = Visibility.Hidden;
                     userLabel.Visibility = Visibility.Hidden;
                     passwordLabel.Visibility = Visibility.Hidden;
 
                     sendMessageButton.Visibility = Visibility.Visible;
                     messageTextBox.Visibility = Visibility.Visible;
+                    userTextBox.Visibility = Visibility.Visible;
                     messagesList.Visibility = Visibility.Visible;
                 }
             }
@@ -72,7 +73,7 @@ namespace Plato
         {
             try
             {
-                await _connection.InvokeAsync(ChatHubEndpointNames.SendMessageToCaller, userTextBox.Text, messageTextBox.Text);
+                await _connection.InvokeAsync(ChatHubEndpointNames.SendMessage, userTextBox.Text, messageTextBox.Text);
             }
             catch (Exception ex)
             {
