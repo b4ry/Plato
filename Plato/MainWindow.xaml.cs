@@ -2,6 +2,7 @@
 using Plato.Constants;
 using Plato.DTOs;
 using Plato.ExternalServices;
+using System.Configuration;
 using System.Windows;
 
 namespace Plato
@@ -19,7 +20,7 @@ namespace Plato
             InitializeComponent();
 
             _connection = new HubConnectionBuilder()
-                .WithUrl("http://localhost:5000/chat", options =>
+                .WithUrl(ConfigurationManager.AppSettings.Get("ChatHubUrl")!, options =>
                 {
                     options.AccessTokenProvider = () => Task.FromResult(_token);
                 })
