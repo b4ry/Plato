@@ -1,8 +1,6 @@
 ﻿namespace Plato.DTOs
 {
-    public sealed class LoginRequest
+    public sealed record LoginRequest(string UserName, string Password)
     {
-        public required string UserName { get; set; }
-        public required string Password { get; set; }
     }
 }

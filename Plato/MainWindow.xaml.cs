@@ -39,11 +39,7 @@ namespace Plato
         {
             try
             {
-                var loginRequest = new LoginRequest()
-                {
-                    UserName = loginUserTextBox.Text,
-                    Password = passwordBox.Password
-                };
+                var loginRequest = new LoginRequest(loginUserTextBox.Text, passwordBox.Password);
 
                 _token = await CerberusApi.GetAuthenticationToken(loginRequest);
 
