@@ -2,6 +2,7 @@
 using Plato.Constants;
 using Plato.DTOs;
 using Plato.ExternalServices;
+using System.Collections.ObjectModel;
 using System.Configuration;
 using System.Windows;
 
@@ -13,11 +14,16 @@ namespace Plato
     public partial class MainWindow : Window
     {
         private readonly HubConnection _connection;
+        private readonly Dictionary<string, IList<string>> _chats = new() { { ChatDefaultChannelNames.Server, [] } };
+        private readonly string _currentChatUser = ChatDefaultChannelNames.Server;
         private string? _token;
+
+        public ObservableCollection<string> CurrentChat { get; set; } = [];
 
         public MainWindow()
         {
             InitializeComponent();
+            this.DataContext = this;
 
             _connection = new HubConnectionBuilder()
                 .WithUrl(ConfigurationManager.AppSettings.Get("ChatHubUrl")!, options =>
@@ -31,7 +37,21 @@ namespace Plato
                 this.Dispatcher.Invoke(() =>
                 {
                     var newMessage = $"{user}: {message}";
-                    messagesList.Items.Add(newMessage);
+
+                    if(!_chats.ContainsKey(user))
+                    {
+                        _chats.Add(user, []);
+                    }
+
+                    _chats[user].Add(newMessage);
+
+                    if (string.Equals(user, _currentChatUser))
+                    {
+                        foreach (var message in _chats[user])
+                        {
+                            CurrentChat.Add(newMessage);
+                        }
+                    }
                 });
             });
         }
