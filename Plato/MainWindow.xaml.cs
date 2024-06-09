@@ -19,6 +19,7 @@ namespace Plato
         private string? _token;
 
         public ObservableCollection<string> CurrentChat { get; set; } = [];
+        public ObservableCollection<string> Users { get; set; } = [ ChatDefaultChannelNames.Server ];
 
         public MainWindow()
         {
@@ -54,6 +55,14 @@ namespace Plato
                     }
                 });
             });
+
+            _connection.On<string>(ChatHubEndpointNames.NewUserJoinedChat, (user) =>
+            {
+                this.Dispatcher.Invoke(() =>
+                {
+                    Users.Add(user);
+                });
+            });
         }
 
         private async void LoginButton_Click(object sender, RoutedEventArgs e)
@@ -78,6 +87,7 @@ namespace Plato
                     messageTextBox.Visibility = Visibility.Visible;
                     userTextBox.Visibility = Visibility.Visible;
                     messagesList.Visibility = Visibility.Visible;
+                    usersList.Visibility = Visibility.Visible;
                 }
             }
             catch (Exception ex)
