@@ -22,6 +22,6 @@
         <PasswordBox x:Name="passwordBox" VerticalContentAlignment="Center" HorizontalAlignment="Left" Height="40" Margin="114,213,0,0" VerticalAlignment="Top" Width="123"/>
         <Label x:Name="passwordLabel" Content="Password" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Left" Height="40" Margin="42,213,0,0" VerticalAlignment="Top" Width="72" FontWeight="Bold"/>
 
-        <ListBox x:Name="usersList" ItemsSource="{Binding Users}" Height="400" Width="100" Margin="290,17,10,17" FontWeight="Bold" Visibility="Hidden"></ListBox>
+        <ListBox x:Name="usersList" ItemsSource="{Binding Users}" SelectionChanged="ChangeChat" SelectionMode="Single" Height="400" Width="100" Margin="290,17,10,17" FontWeight="Bold" Visibility="Hidden"></ListBox>
     </Grid>
 </Window>

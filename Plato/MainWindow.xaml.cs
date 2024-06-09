@@ -5,6 +5,7 @@ using Plato.ExternalServices;
 using System.Collections.ObjectModel;
 using System.Configuration;
 using System.Windows;
+using System.Windows.Controls;
 
 namespace Plato
 {
@@ -15,11 +16,11 @@ namespace Plato
     {
         private readonly HubConnection _connection;
         private readonly Dictionary<string, IList<string>> _chats = new() { { ChatDefaultChannelNames.Server, [] } };
-        private readonly string _currentChatUser = ChatDefaultChannelNames.Server;
+        private string _currentChatUser = ChatDefaultChannelNames.Server;
         private string? _token;
 
         public ObservableCollection<string> CurrentChat { get; set; } = [];
-        public ObservableCollection<string> Users { get; set; } = [ ChatDefaultChannelNames.Server ];
+        public ObservableCollection<string> Users { get; set; } = [ChatDefaultChannelNames.Server];
 
         public MainWindow()
         {
@@ -39,7 +40,7 @@ namespace Plato
                 {
                     var newMessage = $"{user}: {message}";
 
-                    if(!_chats.ContainsKey(user))
+                    if (!_chats.ContainsKey(user))
                     {
                         _chats.Add(user, []);
                     }
@@ -48,10 +49,7 @@ namespace Plato
 
                     if (string.Equals(user, _currentChatUser))
                     {
-                        foreach (var message in _chats[user])
-                        {
-                            CurrentChat.Add(newMessage);
-                        }
+                        CurrentChat.Add(newMessage);
                     }
                 });
             });
@@ -92,7 +90,7 @@ namespace Plato
             }
             catch (Exception ex)
             {
-                messagesList.Items.Add(ex.Message);
+                //messagesList.Items.Add(ex.Message);
             }
         }
 
@@ -104,7 +102,24 @@ namespace Plato
             }
             catch (Exception ex)
             {
-                messagesList.Items.Add(ex.Message);
+                //messagesList.Items.Add(ex.Message);
+            }
+        }
+
+        void ChangeChat(object sender, SelectionChangedEventArgs args)
+        {
+            _currentChatUser = (sender as ListBox)!.SelectedItem.ToString()!;
+
+            CurrentChat.Clear();
+
+            if (!_chats.ContainsKey(_currentChatUser))
+            {
+                _chats.Add(_currentChatUser, []);
+            }
+
+            foreach (var message in _chats[_currentChatUser])
+            {
+                CurrentChat.Add(message);
             }
         }
     }
