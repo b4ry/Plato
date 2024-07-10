@@ -13,15 +13,17 @@
         <TextBox x:Name="messageTextBox" HorizontalAlignment="Left" Height="42" Margin="10,305,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="311" Visibility="Hidden"/>
         <ListBox x:Name="messagesList" ItemsSource="{Binding CurrentChat}" HorizontalAlignment="Left" Height="230" Margin="10,18,0,0" VerticalAlignment="Top" Width="311" RenderTransformOrigin="-0.304,0.109" BorderThickness="1" BorderBrush="Gainsboro" Visibility="Hidden"/>
 
-        <Button x:Name="loginButton" Content="Login" HorizontalAlignment="Left" Margin="254,188,0,0" VerticalAlignment="Top" Width="95" Click="LoginButton_Click" Height="41" />
-
         <!-- User content-->
-        <TextBox x:Name="loginUserTextBox" VerticalContentAlignment="Center" HorizontalAlignment="Left" Height="40" Margin="114,163,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="123"/>
+        <TextBox x:Name="authUserTextBox" VerticalContentAlignment="Center" HorizontalAlignment="Left" Height="40" Margin="114,163,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="123"/>
         <Label x:Name="userLabel" Content="User" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Left" Height="40" Margin="71,163,0,0" VerticalAlignment="Top" Width="38" FontWeight="Bold"/>
 
         <PasswordBox x:Name="passwordBox" VerticalContentAlignment="Center" HorizontalAlignment="Left" Height="40" Margin="114,213,0,0" VerticalAlignment="Top" Width="123"/>
         <Label x:Name="passwordLabel" Content="Password" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Left" Height="40" Margin="42,213,0,0" VerticalAlignment="Top" Width="72" FontWeight="Bold"/>
 
+        <Button x:Name="loginButton" Content="Login" HorizontalAlignment="Left" Margin="114,274,0,0" VerticalAlignment="Top" Width="95" Click="LoginButton_Click" Height="41" />
+        <Button x:Name="registerButton" Content="Register" HorizontalAlignment="Left" Margin="226,274,0,0" VerticalAlignment="Top" Width="95" Click="RegisterButton_Click" Height="41" />
+        <Label x:Name="resultLabel" Content="" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Left" Height="40" Margin="114,330,0,0" VerticalAlignment="Top" Width="140" FontWeight="Bold"/>
+        
         <ListBox x:Name="usersList" ItemsSource="{Binding Users}" SelectionChanged="ChangeChat" SelectionMode="Single" Height="400" Width="100" Margin="290,17,10,17" FontWeight="Bold" Visibility="Hidden"></ListBox>
     </Grid>
 </Window>

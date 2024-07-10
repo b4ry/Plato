@@ -67,7 +67,7 @@ namespace Plato
         {
             try
             {
-                var loginRequest = new LoginRequest(loginUserTextBox.Text, passwordBox.Password);
+                var loginRequest = new LoginRequest(authUserTextBox.Text, passwordBox.Password);
 
                 _token = await CerberusApi.GetAuthenticationToken(loginRequest);
 
@@ -75,18 +75,42 @@ namespace Plato
                 {
                     await _connection.StartAsync();
 
-                    loginButton.Visibility = Visibility.Hidden;
-                    loginUserTextBox.Visibility = Visibility.Hidden;
-                    passwordBox.Visibility = Visibility.Hidden;
-                    userLabel.Visibility = Visibility.Hidden;
-                    passwordLabel.Visibility = Visibility.Hidden;
-
-                    sendMessageButton.Visibility = Visibility.Visible;
-                    messageTextBox.Visibility = Visibility.Visible;
-                    userTextBox.Visibility = Visibility.Visible;
-                    messagesList.Visibility = Visibility.Visible;
-                    usersList.Visibility = Visibility.Visible;
+                    SetAuthFieldsVisibility(Visibility.Hidden);
+                    SetChatFieldsVisibility(Visibility.Visible);
                 }
+            }
+            catch (Exception ex)
+            {
+                //messagesList.Items.Add(ex.Message);
+            }
+        }
+
+        private void SetAuthFieldsVisibility(Visibility visibility)
+        {
+            loginButton.Visibility = visibility;
+            authUserTextBox.Visibility = visibility;
+            passwordBox.Visibility = visibility;
+            userLabel.Visibility = visibility;
+            passwordLabel.Visibility = visibility;
+            resultLabel.Visibility = visibility;
+            registerButton.Visibility = visibility;
+        }
+
+        private void SetChatFieldsVisibility(Visibility visibility)
+        {
+            sendMessageButton.Visibility = visibility;
+            messageTextBox.Visibility = visibility;
+            userTextBox.Visibility = visibility;
+            messagesList.Visibility = visibility;
+            usersList.Visibility = visibility;
+        }
+
+        private async void RegisterButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var registerRequest = new RegisterRequest(authUserTextBox.Text, passwordBox.Password);
+                resultLabel.Content = await CerberusApi.RegisterUser(registerRequest);
             }
             catch (Exception ex)
             {

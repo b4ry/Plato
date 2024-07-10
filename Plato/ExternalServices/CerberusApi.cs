@@ -14,7 +14,6 @@ namespace Plato.ExternalServices
             var endpoint = ConfigurationManager.AppSettings.Get("CerberusApiUrl") + "/Login";
 
             var httpResponse = await new HttpClient().PostAsync(endpoint, content);
-
             var httpResponseContent = await httpResponse.Content.ReadAsStringAsync();
 
             if (httpResponse.IsSuccessStatusCode)
@@ -23,6 +22,29 @@ namespace Plato.ExternalServices
             }
 
             return null;
+        }
+
+        internal static async Task<string> RegisterUser(RegisterRequest registerRequest)
+        {
+            try
+            {
+                var content = new StringContent(JsonConvert.SerializeObject(registerRequest), Encoding.UTF8, "application/json");
+                var endpoint = ConfigurationManager.AppSettings.Get("CerberusApiUrl") + "/Register";
+
+                var httpResponse = await new HttpClient().PostAsync(endpoint, content);
+                var httpResponseContent = await httpResponse.Content.ReadAsStringAsync();
+
+                if (httpResponse.IsSuccessStatusCode)
+                {
+                    return "Registered!";
+                }
+
+                return "Not registered!";
+            }
+            catch(Exception)
+            {
+                throw;
+            }
         }
     }
 }
