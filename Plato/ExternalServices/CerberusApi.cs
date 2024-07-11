@@ -8,7 +8,7 @@ namespace Plato.ExternalServices
 {
     internal static class CerberusApi
     {
-        internal static async Task<string?> GetAuthenticationToken(LoginRequest loginRequest)
+        internal static async Task<string?> GetAuthenticationToken(UserLoginRequest loginRequest)
         {
             var content = new StringContent(JsonConvert.SerializeObject(loginRequest), Encoding.UTF8, "application/json");
             var endpoint = ConfigurationManager.AppSettings.Get("CerberusApiUrl") + "/Login";
@@ -24,7 +24,7 @@ namespace Plato.ExternalServices
             return null;
         }
 
-        internal static async Task<string> RegisterUser(RegisterRequest registerRequest)
+        internal static async Task<string> RegisterUser(UserRegisterRequest registerRequest)
         {
             try
             {
@@ -36,10 +36,10 @@ namespace Plato.ExternalServices
 
                 if (httpResponse.IsSuccessStatusCode)
                 {
-                    return "Registered!";
+                    return "Registered";
                 }
 
-                return "Not registered!";
+                return "Not registered";
             }
             catch(Exception)
             {
