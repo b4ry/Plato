@@ -38,7 +38,7 @@ namespace Plato
             {
                 this.Dispatcher.Invoke(() =>
                 {
-                    var newMessage = $"{user}: {message}";
+                    var newMessage = user != "Server" ? $"{user}: {message}" : $"{message}";
 
                     if (!_chats.ContainsKey(user))
                     {
@@ -100,7 +100,6 @@ namespace Plato
         {
             sendMessageButton.Visibility = visibility;
             messageTextBox.Visibility = visibility;
-            userTextBox.Visibility = visibility;
             messagesList.Visibility = visibility;
             usersList.Visibility = visibility;
         }
@@ -122,7 +121,10 @@ namespace Plato
         {
             try
             {
-                await _connection.InvokeAsync(ChatHubEndpointNames.SendMessage, userTextBox.Text, messageTextBox.Text);
+                CurrentChat.Add(messageTextBox.Text);
+                _chats[_currentChatUser].Add(messageTextBox.Text); // TODO: it should be possible to send a reference of this chat to current chat
+
+                await _connection.InvokeAsync(ChatHubEndpointNames.SendMessage, _currentChatUser, messageTextBox.Text);
             }
             catch (Exception ex)
             {
