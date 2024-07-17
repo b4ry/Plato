@@ -101,7 +101,8 @@ namespace Plato
 
             if(_currentChatUsername == null)
             {
-                _currentChatUsername = ChatDefaultChannelNames.Server; // redirect to the server channel 
+                _currentChatUsername = ChatDefaultChannelNames.Server; // redirect to the server channel
+                usersList.SelectedItem = _users[_currentChatUsername];
             }
 
             _users[_currentChatUsername].HasNewMessage = false;
