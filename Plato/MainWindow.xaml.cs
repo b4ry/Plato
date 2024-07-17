@@ -18,16 +18,21 @@ namespace Plato
     {
         private readonly HubConnection _connection;
         private readonly Dictionary<string, IList<string>> _chats = new() { { ChatDefaultChannelNames.Server, [] } };
+        private readonly Dictionary<string, User> _users = [];
         private string _currentChatUsername = ChatDefaultChannelNames.Server;
         private string? _token;
 
         public ObservableCollection<string> CurrentChat { get; set; } = [];
-        public ObservableCollection<User> Users { get; set; } = [ new User() { Name = ChatDefaultChannelNames.Server, HasNewMessage = false }];
+        public ObservableCollection<User> Users { get; set; } = [];
 
         public MainWindow()
         {
             InitializeComponent();
             this.DataContext = this;
+
+            var serverUser = new User() { Name = ChatDefaultChannelNames.Server, HasNewMessage = false };
+            _users.Add(ChatDefaultChannelNames.Server, serverUser);
+            Users.Add(serverUser);
 
             _connection = new HubConnectionBuilder()
                 .WithUrl(ConfigurationManager.AppSettings.Get("ChatHubUrl")!, options =>
@@ -93,7 +98,7 @@ namespace Plato
         private void ChangeChat(object sender, SelectionChangedEventArgs args)
         {
             _currentChatUsername = ((sender as ListBox)!.SelectedItem as User)!.Name;
-            Users.Single(x => x.Name == _currentChatUsername).HasNewMessage = false;
+            _users[_currentChatUsername].HasNewMessage = false;
 
             CurrentChat.Clear();
 
@@ -129,8 +134,7 @@ namespace Plato
                     }
                     else
                     {
-                        var user = Users.Single(x => x.Name == username);
-                        user.HasNewMessage = true;
+                        _users[username].HasNewMessage = true;
                     }
                 }));
             });
@@ -139,7 +143,7 @@ namespace Plato
             {
                 this.Dispatcher.Invoke(() =>
                 {
-                    Users.Add(new User() { Name = username, HasNewMessage = false });
+                    AddNewUser(username);
                 });
             });
 
@@ -147,22 +151,31 @@ namespace Plato
             {
                 this.Dispatcher.Invoke(() =>
                 {
-                    var userToDelete = Users.Single(x => x.Name == username);
+                    var userToDelete = _users[username];
 
                     Users.Remove(userToDelete);
+                    _users.Remove(username);
                 });
             });
 
-            _connection.On<IEnumerable<string>>(ListenerMethodNames.GetUsers, (users) =>
+            _connection.On(ListenerMethodNames.GetUsers, (Action<IEnumerable<string>>)((users) =>
             {
-                this.Dispatcher.Invoke(() =>
+                this.Dispatcher.Invoke((Delegate)(() =>
                 {
-                    foreach (var user in users)
+                    foreach (var username in users)
                     {
-                        Users.Add(new User() { Name = user, HasNewMessage = false });
+                        AddNewUser(username);
                     }
-                });
-            });
+                }));
+            }));
+        }
+
+        private void AddNewUser(string username)
+        {
+            var newUser = new User() { Name = username, HasNewMessage = false };
+
+            _users.Add(username, newUser);
+            Users.Add(newUser);
         }
 
         private void SetAuthFieldsVisibility(Visibility visibility)
