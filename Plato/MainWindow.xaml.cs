@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Plato.Constants;
 using Plato.DTOs;
 using Plato.ExternalServices;
+using Plato.Models;
 using System.Collections.ObjectModel;
 using System.Configuration;
 using System.Windows;
@@ -17,11 +18,11 @@ namespace Plato
     {
         private readonly HubConnection _connection;
         private readonly Dictionary<string, IList<string>> _chats = new() { { ChatDefaultChannelNames.Server, [] } };
-        private string _currentChatUser = ChatDefaultChannelNames.Server;
+        private string _currentChatUsername = ChatDefaultChannelNames.Server;
         private string? _token;
 
         public ObservableCollection<string> CurrentChat { get; set; } = [];
-        public ObservableCollection<string> Users { get; set; } = [ChatDefaultChannelNames.Server];
+        public ObservableCollection<User> Users { get; set; } = [ new User() { Name = ChatDefaultChannelNames.Server, HasNewMessage = false }];
 
         public MainWindow()
         {
@@ -79,9 +80,9 @@ namespace Plato
             try
             {
                 CurrentChat.Add(messageTextBox.Text);
-                _chats[_currentChatUser].Add(messageTextBox.Text); // TODO: it should be possible to set a reference of this chat to current chat
+                _chats[_currentChatUsername].Add(messageTextBox.Text); // TODO: it should be possible to set a reference of this chat to current chat
 
-                await _connection.InvokeAsync(ChatHubEndpointNames.SendMessage, _currentChatUser, messageTextBox.Text);
+                await _connection.InvokeAsync(ChatHubEndpointNames.SendMessage, _currentChatUsername, messageTextBox.Text);
             }
             catch (Exception ex)
             {
@@ -91,16 +92,17 @@ namespace Plato
 
         private void ChangeChat(object sender, SelectionChangedEventArgs args)
         {
-            _currentChatUser = (sender as ListBox)!.SelectedItem.ToString()!;
+            _currentChatUsername = ((sender as ListBox)!.SelectedItem as User)!.Name;
+            Users.Single(x => x.Name == _currentChatUsername).HasNewMessage = false;
 
             CurrentChat.Clear();
 
-            if (!_chats.ContainsKey(_currentChatUser))
+            if (!_chats.ContainsKey(_currentChatUsername))
             {
-                _chats.Add(_currentChatUser, []);
+                _chats.Add(_currentChatUsername, []);
             }
 
-            foreach (var message in _chats[_currentChatUser])
+            foreach (var message in _chats[_currentChatUsername])
             {
                 CurrentChat.Add(message);
             }
@@ -108,39 +110,46 @@ namespace Plato
 
         private void RegisterListeners()
         {
-            _connection.On<string, string>(ListenerMethodNames.ReceiveMessage, (user, message) =>
+            _connection.On<string, string>(ListenerMethodNames.ReceiveMessage, (username, message) =>
             {
-                this.Dispatcher.Invoke(() =>
+                this.Dispatcher.Invoke((Delegate)(() =>
                 {
-                    var newMessage = user != ChatDefaultChannelNames.Server ? $"{user}: {message}" : $"{message}";
+                    var newMessage = username != ChatDefaultChannelNames.Server ? $"{username}: {message}" : $"{message}";
 
-                    if (!_chats.ContainsKey(user))
+                    if (!_chats.ContainsKey(username))
                     {
-                        _chats.Add(user, []);
+                        _chats.Add(username, []);
                     }
 
-                    _chats[user].Add(newMessage);
+                    _chats[username].Add(newMessage);
 
-                    if (string.Equals(user, _currentChatUser))
+                    if (string.Equals(username, _currentChatUsername))
                     {
                         CurrentChat.Add(newMessage);
                     }
-                });
+                    else
+                    {
+                        var user = Users.Single(x => x.Name == username);
+                        user.HasNewMessage = true;
+                    }
+                }));
             });
 
-            _connection.On<string>(ListenerMethodNames.NewUserJoinedChat, (user) =>
+            _connection.On<string>(ListenerMethodNames.NewUserJoinedChat, (username) =>
             {
                 this.Dispatcher.Invoke(() =>
                 {
-                    Users.Add(user);
+                    Users.Add(new User() { Name = username, HasNewMessage = false });
                 });
             });
 
-            _connection.On<string>(ListenerMethodNames.UserLoggedOut, (user) =>
+            _connection.On<string>(ListenerMethodNames.UserLoggedOut, (username) =>
             {
                 this.Dispatcher.Invoke(() =>
                 {
-                    Users.Remove(user);
+                    var userToDelete = Users.Single(x => x.Name == username);
+
+                    Users.Remove(userToDelete);
                 });
             });
 
@@ -150,7 +159,7 @@ namespace Plato
                 {
                     foreach (var user in users)
                     {
-                        Users.Add(user);
+                        Users.Add(new User() { Name = user, HasNewMessage = false });
                     }
                 });
             });

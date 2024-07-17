@@ -6,6 +6,24 @@
         xmlns:local="clr-namespace:Plato"
         mc:Ignorable="d"
         Title="Plato" Height="500" Width="500">
+
+    <Window.Resources>
+        <!-- DataTemplate to customize the user item appearance -->
+        <DataTemplate x:Key="UserItemTemplate">
+            <TextBlock Text="{Binding Name}" FontWeight="Bold">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasNewMessage}" Value="True">
+                                <Setter Property="Foreground" Value="Green"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
+        </DataTemplate>
+    </Window.Resources>
+    
     <Grid>
         <!-- Message content -->
         <Button x:Name="sendMessageButton" Content="Send Message" HorizontalAlignment="Left" Margin="10,355,0,0" VerticalAlignment="Top" Width="311" Click="SendMessageButton_Click" Height="42" Visibility="Hidden"/>
@@ -22,7 +40,16 @@
         <Button x:Name="loginButton" Content="Login" HorizontalAlignment="Left" Margin="114,274,0,0" VerticalAlignment="Top" Width="95" Click="LoginButton_Click" Height="41" />
         <Button x:Name="registerButton" Content="Register" HorizontalAlignment="Left" Margin="226,274,0,0" VerticalAlignment="Top" Width="95" Click="RegisterButton_Click" Height="41" />
         <Label x:Name="resultLabel" Content="" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Left" Height="40" Margin="114,330,0,0" VerticalAlignment="Top" Width="140" FontWeight="Bold"/>
-        
-        <ListBox x:Name="usersList" ItemsSource="{Binding Users}" SelectionChanged="ChangeChat" SelectionMode="Single" Height="400" Width="100" Margin="290,17,10,17" FontWeight="Bold" Visibility="Hidden"></ListBox>
+
+        <ListBox x:Name="usersList"
+                 ItemsSource="{Binding Users}"
+                 ItemTemplate="{StaticResource UserItemTemplate}"
+                 SelectionChanged="ChangeChat"
+                 SelectionMode="Single"
+                 Height="400"
+                 Width="100"
+                 Margin="290,17,10,17"
+                 Visibility="Hidden">
+        </ListBox>
     </Grid>
 </Window>
