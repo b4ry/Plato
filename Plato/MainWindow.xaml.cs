@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.DependencyInjection;
 using Plato.Constants;
 using Plato.DTOs;
 using Plato.ExternalServices;
@@ -32,6 +33,7 @@ namespace Plato
                 {
                     options.AccessTokenProvider = () => Task.FromResult(_token);
                 })
+                .AddMessagePackProtocol()
                 .Build();
         }
 
