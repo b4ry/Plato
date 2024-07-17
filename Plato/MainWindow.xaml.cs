@@ -97,7 +97,13 @@ namespace Plato
 
         private void ChangeChat(object sender, SelectionChangedEventArgs args)
         {
-            _currentChatUsername = ((sender as ListBox)!.SelectedItem as User)!.Name;
+            _currentChatUsername = ((sender as ListBox)?.SelectedItem as User)?.Name;
+
+            if(_currentChatUsername == null)
+            {
+                _currentChatUsername = ChatDefaultChannelNames.Server; // redirect to the server channel 
+            }
+
             _users[_currentChatUsername].HasNewMessage = false;
 
             CurrentChat.Clear();
