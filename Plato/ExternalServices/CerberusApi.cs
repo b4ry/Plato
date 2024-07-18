@@ -1,5 +1,5 @@
 ﻿using Newtonsoft.Json;
-using Plato.DTOs;
+using Plato.Models.DTOs;
 using System.Configuration;
 using System.Net.Http;
 using System.Text;

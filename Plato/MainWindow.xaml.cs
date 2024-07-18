@@ -1,9 +1,9 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Plato.Constants;
-using Plato.DTOs;
 using Plato.ExternalServices;
 using Plato.Models;
+using Plato.Models.DTOs;
 using System.Collections.ObjectModel;
 using System.Configuration;
 using System.Windows;
