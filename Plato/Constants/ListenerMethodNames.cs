@@ -4,8 +4,8 @@
     {
 
         internal static readonly string ReceiveMessage = "ReceiveMessage";
-        internal static readonly string NewUserJoinedChat = "NewUserJoinedChat";
+        internal static readonly string UserJoinsChat = "UserJoinsChat";
         internal static readonly string GetUsers = "GetUsers";
-        internal static readonly string UserLoggedOut = "UserLoggedOut";
+        internal static readonly string UserLogsOut = "UserLogsOut";
     }
 }

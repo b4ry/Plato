@@ -43,6 +43,8 @@ namespace Plato
                 .Build();
         }
 
+        #region Button click handlers
+
         private async void LoginButton_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -95,32 +97,58 @@ namespace Plato
             }
         }
 
-        private void ChangeChat(object sender, SelectionChangedEventArgs args)
-        {
-            _currentChatUsername = ((sender as ListBox)?.SelectedItem as User)?.Name;
+        #endregion
 
-            if(_currentChatUsername == null)
-            {
-                _currentChatUsername = ChatDefaultChannelNames.Server; // redirect to the server channel
-                usersList.SelectedItem = _users[_currentChatUsername];
-            }
-
-            _users[_currentChatUsername].HasNewMessage = false;
-
-            CurrentChat.Clear();
-
-            if (!_chats.ContainsKey(_currentChatUsername))
-            {
-                _chats.Add(_currentChatUsername, []);
-            }
-
-            foreach (var message in _chats[_currentChatUsername])
-            {
-                CurrentChat.Add(message);
-            }
-        }
+        #region Register listeners
 
         private void RegisterListeners()
+        {
+            RegisterReceiveMessageListener();
+            RegisterUserJoinsChatListener();
+            RegisterUserLogsOutListener();
+            RegisterGetUsersListener();
+        }
+
+        private void RegisterGetUsersListener()
+        {
+            _connection.On(ListenerMethodNames.GetUsers, (Action<IEnumerable<string>>)((users) =>
+            {
+                this.Dispatcher.Invoke((Delegate)(() =>
+                {
+                    foreach (var username in users)
+                    {
+                        AddNewUser(username);
+                    }
+                }));
+            }));
+        }
+
+        private void RegisterUserLogsOutListener()
+        {
+            _connection.On<string>(ListenerMethodNames.UserLogsOut, (username) =>
+            {
+                this.Dispatcher.Invoke(() =>
+                {
+                    var userToDelete = _users[username];
+
+                    Users.Remove(userToDelete);
+                    _users.Remove(username);
+                });
+            });
+        }
+
+        private void RegisterUserJoinsChatListener()
+        {
+            _connection.On<string>(ListenerMethodNames.UserJoinsChat, (username) =>
+            {
+                this.Dispatcher.Invoke(() =>
+                {
+                    AddNewUser(username);
+                });
+            });
+        }
+
+        private void RegisterReceiveMessageListener()
         {
             _connection.On<string, string>(ListenerMethodNames.ReceiveMessage, (username, message) =>
             {
@@ -145,45 +173,11 @@ namespace Plato
                     }
                 }));
             });
-
-            _connection.On<string>(ListenerMethodNames.NewUserJoinedChat, (username) =>
-            {
-                this.Dispatcher.Invoke(() =>
-                {
-                    AddNewUser(username);
-                });
-            });
-
-            _connection.On<string>(ListenerMethodNames.UserLoggedOut, (username) =>
-            {
-                this.Dispatcher.Invoke(() =>
-                {
-                    var userToDelete = _users[username];
-
-                    Users.Remove(userToDelete);
-                    _users.Remove(username);
-                });
-            });
-
-            _connection.On(ListenerMethodNames.GetUsers, (Action<IEnumerable<string>>)((users) =>
-            {
-                this.Dispatcher.Invoke((Delegate)(() =>
-                {
-                    foreach (var username in users)
-                    {
-                        AddNewUser(username);
-                    }
-                }));
-            }));
         }
 
-        private void AddNewUser(string username)
-        {
-            var newUser = new User() { Name = username, HasNewMessage = false };
+        #endregion
 
-            _users.Add(username, newUser);
-            Users.Add(newUser);
-        }
+        #region UI Fields visibility
 
         private void SetAuthFieldsVisibility(Visibility visibility)
         {
@@ -202,6 +196,40 @@ namespace Plato
             messageTextBox.Visibility = visibility;
             messagesList.Visibility = visibility;
             usersList.Visibility = visibility;
+        }
+
+        #endregion
+
+        private void ChangeChat(object sender, SelectionChangedEventArgs args)
+        {
+            _currentChatUsername = ((sender as ListBox)?.SelectedItem as User)?.Name;
+
+            if (_currentChatUsername == null)
+            {
+                _currentChatUsername = ChatDefaultChannelNames.Server; // redirect to the server channel
+                usersList.SelectedItem = _users[_currentChatUsername];
+            }
+
+            _users[_currentChatUsername].HasNewMessage = false;
+
+            CurrentChat.Clear();
+
+            if (!_chats.ContainsKey(_currentChatUsername))
+            {
+                _chats.Add(_currentChatUsername, []);
+            }
+
+            foreach (var message in _chats[_currentChatUsername])
+            {
+                CurrentChat.Add(message);
+            }
+        }
+        private void AddNewUser(string username)
+        {
+            var newUser = new User() { Name = username, HasNewMessage = false };
+
+            _users.Add(username, newUser);
+            Users.Add(newUser);
         }
     }
 }
