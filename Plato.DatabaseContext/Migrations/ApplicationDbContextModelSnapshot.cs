@@ -18,8 +18,9 @@ namespace Plato.DatabaseContext.Migrations
 
             modelBuilder.Entity("Plato.DatabaseContext.Entities.MessageEntity", b =>
                 {
-                    b.Property<string>("Username")
-                        .HasColumnType("TEXT");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Message")
                         .IsRequired()
@@ -28,7 +29,11 @@ namespace Plato.DatabaseContext.Migrations
                     b.Property<int>("Order")
                         .HasColumnType("INTEGER");
 
-                    b.HasKey("Username");
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
 
                     b.ToTable("Messages");
                 });

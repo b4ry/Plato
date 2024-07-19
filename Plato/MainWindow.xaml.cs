@@ -69,6 +69,8 @@ namespace Plato
 
                     SetAuthFieldsVisibility(Visibility.Hidden);
                     SetChatFieldsVisibility(Visibility.Visible);
+
+                    usersList.SelectedItem = _users[_currentChatUsername];
                 }
             }
             catch (Exception ex)
@@ -96,6 +98,8 @@ namespace Plato
             {
                 CurrentChat.Add(messageTextBox.Text);
                 _chats[_currentChatUsername].Add(messageTextBox.Text); // TODO: it should be possible to set a reference of this chat to current chat
+
+                await SaveNewMessage(messageTextBox.Text);
 
                 await _connection.InvokeAsync(ChatHubEndpointNames.SendMessage, _currentChatUsername, messageTextBox.Text);
             }
@@ -170,15 +174,7 @@ namespace Plato
                     }
 
                     _chats[username].Add(newMessage);
-                    var newMessageEntity = new MessageEntity()
-                    {
-                        Username = username,
-                        Message = newMessage,
-                        Order = _chats[username].Count + 1
-                    };
-
-                    _applicationDbContext.Add(newMessageEntity);
-                    await _applicationDbContext.SaveChangesAsync();
+                    await SaveNewMessage(newMessage);
 
                     if (string.Equals(username, _currentChatUsername))
                     {
@@ -216,6 +212,19 @@ namespace Plato
         }
 
         #endregion
+
+        private async Task SaveNewMessage(string newMessage)
+        {
+            var newMessageEntity = new MessageEntity()
+            {
+                Username = _currentChatUsername,
+                Message = newMessage,
+                Order = _chats[_currentChatUsername].Count
+            };
+
+            _applicationDbContext.Add(newMessageEntity);
+            await _applicationDbContext.SaveChangesAsync();
+        }
 
         private void ChangeChat(object sender, SelectionChangedEventArgs args)
         {

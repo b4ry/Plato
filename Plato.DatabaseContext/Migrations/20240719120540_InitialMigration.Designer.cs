@@ -10,7 +10,7 @@ using Plato.DatabaseContext;
 namespace Plato.DatabaseContext.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20240718141912_InitialMigration")]
+    [Migration("20240719120540_InitialMigration")]
     partial class InitialMigration
     {
         /// <inheritdoc />
@@ -21,8 +21,9 @@ namespace Plato.DatabaseContext.Migrations
 
             modelBuilder.Entity("Plato.DatabaseContext.Entities.MessageEntity", b =>
                 {
-                    b.Property<string>("Username")
-                        .HasColumnType("TEXT");
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Message")
                         .IsRequired()
@@ -31,7 +32,11 @@ namespace Plato.DatabaseContext.Migrations
                     b.Property<int>("Order")
                         .HasColumnType("INTEGER");
 
-                    b.HasKey("Username");
+                    b.Property<string>("Username")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
 
                     b.ToTable("Messages");
                 });
