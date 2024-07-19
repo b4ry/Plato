@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Plato.Constants;
+using Plato.DatabaseContext;
+using Plato.DatabaseContext.Entities;
 using Plato.ExternalServices;
 using Plato.Models;
 using Plato.Models.DTOs;
@@ -17,18 +19,24 @@ namespace Plato
     public partial class MainWindow : Window
     {
         private readonly HubConnection _connection;
+
         private readonly Dictionary<string, IList<string>> _chats = new() { { ChatDefaultChannelNames.Server, [] } };
         private readonly Dictionary<string, User> _users = [];
+
+        private readonly ApplicationDbContext _applicationDbContext;
+
         private string _currentChatUsername = ChatDefaultChannelNames.Server;
         private string? _token;
 
         public ObservableCollection<string> CurrentChat { get; set; } = [];
         public ObservableCollection<User> Users { get; set; } = [];
 
-        public MainWindow()
+        public MainWindow(ApplicationDbContext applicationDbContext)
         {
             InitializeComponent();
             this.DataContext = this;
+
+            _applicationDbContext = applicationDbContext;
 
             var serverUser = new User() { Name = ChatDefaultChannelNames.Server, HasNewMessage = false };
             _users.Add(ChatDefaultChannelNames.Server, serverUser);
@@ -152,7 +160,7 @@ namespace Plato
         {
             _connection.On<string, string>(ListenerMethodNames.ReceiveMessage, (username, message) =>
             {
-                this.Dispatcher.Invoke((Delegate)(() =>
+                this.Dispatcher.Invoke(async () =>
                 {
                     var newMessage = username != ChatDefaultChannelNames.Server ? $"{username}: {message}" : $"{message}";
 
@@ -162,6 +170,15 @@ namespace Plato
                     }
 
                     _chats[username].Add(newMessage);
+                    var newMessageEntity = new MessageEntity()
+                    {
+                        Username = username,
+                        Message = newMessage,
+                        Order = _chats[username].Count + 1
+                    };
+
+                    _applicationDbContext.Add(newMessageEntity);
+                    await _applicationDbContext.SaveChangesAsync();
 
                     if (string.Equals(username, _currentChatUsername))
                     {
@@ -171,7 +188,7 @@ namespace Plato
                     {
                         _users[username].HasNewMessage = true;
                     }
-                }));
+                });
             });
         }
 

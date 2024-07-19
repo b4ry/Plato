@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Plato.DatabaseContext;
+using System;
 using System.Windows;
 
 namespace Plato
@@ -9,21 +10,28 @@ namespace Plato
     {
         public static IServiceProvider ServiceProvider { get; private set; }
 
-        protected override void OnStartup(StartupEventArgs e)
+        public App()
         {
-            var serviceCollection = new ServiceCollection();
-            ConfigureServices(serviceCollection);
-            ServiceProvider = serviceCollection.BuildServiceProvider();
+            ServiceCollection services = new ServiceCollection();
+            ConfigureServices(services);
+            ServiceProvider = services.BuildServiceProvider();
+        }
 
+        private static void ConfigureServices(ServiceCollection services)
+        {
+            services.AddDbContext<ApplicationDbContext>();
+            services.AddSingleton<MainWindow>();
+        }
+
+        private void OnStartup(object sender, StartupEventArgs e)
+        {
             using var serviceScope = ServiceProvider.GetRequiredService<IServiceScopeFactory>().CreateScope();
             
             var context = serviceScope.ServiceProvider.GetService<ApplicationDbContext>();
             context!.Database.Migrate();
-        }
 
-        private static void ConfigureServices(IServiceCollection services)
-        {
-            services.AddDbContext<ApplicationDbContext>();
+            var mainWindow = serviceScope.ServiceProvider.GetService<MainWindow>();
+            mainWindow!.Show();
         }
     }
 }
