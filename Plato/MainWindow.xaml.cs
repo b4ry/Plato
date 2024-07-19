@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Plato.Constants;
 using Plato.DatabaseContext;
@@ -20,7 +21,7 @@ namespace Plato
     {
         private readonly HubConnection _connection;
 
-        private readonly Dictionary<string, IList<string>> _chats = new() { { ChatDefaultChannelNames.Server, [] } };
+        private readonly Dictionary<string, IList<string>> _chats = [];
         private readonly Dictionary<string, User> _users = [];
 
         private readonly ApplicationDbContext _applicationDbContext;
@@ -69,6 +70,23 @@ namespace Plato
 
                     SetAuthFieldsVisibility(Visibility.Hidden);
                     SetChatFieldsVisibility(Visibility.Visible);
+
+                    var chats = await _applicationDbContext.Messages
+                        .GroupBy(message => message.Username)
+                        .Select(group => new
+                        {
+                            Username = group.Key,
+                            Messages = group.OrderBy(g => g.Order).Select(g => g.Message).ToList()
+                        })
+                        .ToListAsync();
+
+                    foreach(var chat in chats)
+                    {
+                        if (!_chats.ContainsKey(chat.Username))
+                        {
+                            _chats.Add(chat.Username, chat.Messages);
+                        }
+                    }
 
                     usersList.SelectedItem = _users[_currentChatUsername];
                 }
