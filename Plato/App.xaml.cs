@@ -21,7 +21,7 @@ namespace Plato
         private static void ConfigureServices(ServiceCollection services)
         {
             services.AddDbContext<ApplicationDbContext>();
-            services.AddSingleton<AesEncryption>();
+            services.AddSingleton<AesEncryptor>();
             services.AddSingleton<MainWindow>();
         }
 

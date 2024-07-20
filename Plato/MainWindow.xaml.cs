@@ -26,7 +26,7 @@ namespace Plato
         private readonly Dictionary<string, User> _users = [];
 
         private readonly ApplicationDbContext _applicationDbContext;
-        private readonly AesEncryption _aesEncryption;
+        private readonly AesEncryptor _aesEncryptor;
 
         private string _currentChatUsername = ChatDefaultChannelNames.Server;
         private string? _token;
@@ -34,13 +34,13 @@ namespace Plato
         public ObservableCollection<string> CurrentChat { get; set; } = [];
         public ObservableCollection<User> Users { get; set; } = [];
 
-        public MainWindow(ApplicationDbContext applicationDbContext, AesEncryption aesEncryption)
+        public MainWindow(ApplicationDbContext applicationDbContext, AesEncryptor aesEncryption)
         {
             InitializeComponent();
             this.DataContext = this;
 
             _applicationDbContext = applicationDbContext;
-            _aesEncryption = aesEncryption;
+            _aesEncryptor = aesEncryption;
 
             var serverUser = new User() { Name = ChatDefaultChannelNames.Server, HasNewMessage = false };
             _users.Add(ChatDefaultChannelNames.Server, serverUser);
@@ -239,9 +239,11 @@ namespace Plato
             var newMessageEntity = new MessageEntity()
             {
                 Username = _currentChatUsername,
-                Message = newMessage,
+                Message = await _aesEncryptor.Encrypt(newMessage),
                 Order = _chats[_currentChatUsername].Count
             };
+
+            var a = await _aesEncryptor.Decrypt(newMessageEntity.Message);
 
             _applicationDbContext.Add(newMessageEntity);
             await _applicationDbContext.SaveChangesAsync();
