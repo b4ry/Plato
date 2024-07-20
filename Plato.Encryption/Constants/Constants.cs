@@ -1,4 +1,4 @@
-﻿namespace Plato.Encryption
+﻿namespace Plato.Encryption.Constants
 {
     internal static class Constants
     {

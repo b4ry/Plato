@@ -3,7 +3,7 @@ using System.Text;
 
 namespace Plato.Encryption
 {
-    public class AesEncryptor : IDisposable
+    public class AesEncryptor : IAesEncryptor, IDisposable
     {
         private readonly Aes _aes;
         private readonly ICryptoTransform _aesEncryptor;
@@ -13,22 +13,22 @@ namespace Plato.Encryption
         {
             _aes = Aes.Create();
 
-            if (!File.Exists(Path.Combine(Constants.AesInitialVectorFileName)))
+            if (!File.Exists(Path.Combine(Constants.Constants.AesInitialVectorFileName)))
             {
-                SaveToFile(Constants.AesInitialVectorFileName, _aes.IV, _aes.IV.Length);
+                SaveToFile(Constants.Constants.AesInitialVectorFileName, _aes.IV, _aes.IV.Length);
             }
             else
             {
-                _aes.IV = ReadFromFile(Constants.AesInitialVectorFileName, _aes.IV.Length);
+                _aes.IV = ReadFromFile(Constants.Constants.AesInitialVectorFileName, _aes.IV.Length);
             }
 
-            if (!File.Exists(Path.Combine(Constants.AesEncryptionKeyFileName)))
+            if (!File.Exists(Path.Combine(Constants.Constants.AesEncryptionKeyFileName)))
             {
-                SaveToFile(Constants.AesEncryptionKeyFileName, _aes.Key, _aes.Key.Length);
+                SaveToFile(Constants.Constants.AesEncryptionKeyFileName, _aes.Key, _aes.Key.Length);
             }
             else
             {
-                _aes.Key = ReadFromFile(Constants.AesEncryptionKeyFileName, _aes.Key.Length);
+                _aes.Key = ReadFromFile(Constants.Constants.AesEncryptionKeyFileName, _aes.Key.Length);
             }
 
             _aesEncryptor = _aes.CreateEncryptor();
@@ -104,6 +104,8 @@ namespace Plato.Encryption
             {
                 if (_aes != null)
                 {
+                    _aesEncryptor.Dispose();
+                    _aesDecryptor.Dispose();
                     _aes.Dispose();
                 }
             }

@@ -2,7 +2,8 @@
 using Microsoft.Extensions.DependencyInjection;
 using Plato.DatabaseContext;
 using Plato.Encryption;
-using System;
+using Plato.ExternalServices;
+using System.Configuration;
 using System.Windows;
 
 namespace Plato
@@ -13,7 +14,7 @@ namespace Plato
 
         public App()
         {
-            ServiceCollection services = new ServiceCollection();
+            ServiceCollection services = new();
             ConfigureServices(services);
             ServiceProvider = services.BuildServiceProvider();
         }
@@ -21,8 +22,14 @@ namespace Plato
         private static void ConfigureServices(ServiceCollection services)
         {
             services.AddDbContext<ApplicationDbContext>();
-            services.AddSingleton<AesEncryptor>();
+
+            services.AddScoped<AesEncryptor>();
             services.AddSingleton<MainWindow>();
+
+            services.AddHttpClient<IAuthenticationService, AuthenticationService>((client) =>
+            {
+                client.BaseAddress = new Uri(ConfigurationManager.AppSettings.Get("CerberusApiUrl")!);
+            });
         }
 
         private void OnStartup(object sender, StartupEventArgs e)

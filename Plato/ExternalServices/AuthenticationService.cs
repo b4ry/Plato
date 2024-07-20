@@ -1,19 +1,24 @@
 ﻿using Newtonsoft.Json;
 using Plato.Models.DTOs;
-using System.Configuration;
 using System.Net.Http;
 using System.Text;
 
 namespace Plato.ExternalServices
 {
-    internal static class CerberusApi
+    public class AuthenticationService : IAuthenticationService
     {
-        internal static async Task<string?> GetAuthenticationToken(UserLoginRequest loginRequest)
+        private readonly HttpClient _httpClient;
+
+        public AuthenticationService(HttpClient httpClient)
+        {
+            _httpClient = httpClient;
+        }
+
+        public async Task<string?> GetAuthenticationToken(UserLoginRequest loginRequest)
         {
             var content = new StringContent(JsonConvert.SerializeObject(loginRequest), Encoding.UTF8, "application/json");
-            var endpoint = ConfigurationManager.AppSettings.Get("CerberusApiUrl") + "/Login";
 
-            var httpResponse = await new HttpClient().PostAsync(endpoint, content);
+            var httpResponse = await _httpClient.PostAsync("login", content);
             var httpResponseContent = await httpResponse.Content.ReadAsStringAsync();
 
             if (httpResponse.IsSuccessStatusCode)
@@ -24,14 +29,13 @@ namespace Plato.ExternalServices
             return null;
         }
 
-        internal static async Task<string> RegisterUser(UserRegisterRequest registerRequest)
+        public async Task<string> RegisterUser(UserRegisterRequest registerRequest)
         {
             try
             {
                 var content = new StringContent(JsonConvert.SerializeObject(registerRequest), Encoding.UTF8, "application/json");
-                var endpoint = ConfigurationManager.AppSettings.Get("CerberusApiUrl") + "/Register";
 
-                var httpResponse = await new HttpClient().PostAsync(endpoint, content);
+                var httpResponse = await _httpClient.PostAsync("register", content);
                 var httpResponseContent = await httpResponse.Content.ReadAsStringAsync();
 
                 if (httpResponse.IsSuccessStatusCode)

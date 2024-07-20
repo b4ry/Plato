@@ -27,6 +27,7 @@ namespace Plato
 
         private readonly ApplicationDbContext _applicationDbContext;
         private readonly AesEncryptor _aesEncryptor;
+        private readonly IAuthenticationService _authenticationService;
 
         private string _currentChatUsername = ChatDefaultChannelNames.Server;
         private string? _token;
@@ -34,13 +35,19 @@ namespace Plato
         public ObservableCollection<string> CurrentChat { get; set; } = [];
         public ObservableCollection<User> Users { get; set; } = [];
 
-        public MainWindow(ApplicationDbContext applicationDbContext, AesEncryptor aesEncryption)
+        public MainWindow
+            (
+                ApplicationDbContext applicationDbContext,
+                AesEncryptor aesEncryption,
+                IAuthenticationService authenticationService
+            )
         {
             InitializeComponent();
             this.DataContext = this;
 
             _applicationDbContext = applicationDbContext;
             _aesEncryptor = aesEncryption;
+            _authenticationService = authenticationService;
 
             var serverUser = new User() { Name = ChatDefaultChannelNames.Server, HasNewMessage = false };
             _users.Add(ChatDefaultChannelNames.Server, serverUser);
@@ -63,7 +70,7 @@ namespace Plato
             {
                 var loginRequest = new UserLoginRequest(authUserTextBox.Text, passwordBox.Password);
 
-                _token = await CerberusApi.GetAuthenticationToken(loginRequest);
+                _token = await _authenticationService.GetAuthenticationToken(loginRequest);
 
                 if (_token != null)
                 {
@@ -87,7 +94,14 @@ namespace Plato
                     {
                         if (!_chats.ContainsKey(chat.Username))
                         {
-                            _chats.Add(chat.Username, chat.Messages);
+                            _chats[chat.Username] = [];
+
+                            foreach(var encryptedMessage in chat.Messages)
+                            {
+                                var message = await _aesEncryptor.Decrypt(encryptedMessage);
+
+                                _chats[chat.Username].Add(message);
+                            }
                         }
                     }
 
@@ -105,7 +119,7 @@ namespace Plato
             try
             {
                 var registerRequest = new UserRegisterRequest(authUserTextBox.Text, passwordBox.Password);
-                resultLabel.Content = await CerberusApi.RegisterUser(registerRequest);
+                resultLabel.Content = await _authenticationService.RegisterUser(registerRequest);
             }
             catch (Exception ex)
             {
@@ -242,8 +256,6 @@ namespace Plato
                 Message = await _aesEncryptor.Encrypt(newMessage),
                 Order = _chats[_currentChatUsername].Count
             };
-
-            var a = await _aesEncryptor.Decrypt(newMessageEntity.Message);
 
             _applicationDbContext.Add(newMessageEntity);
             await _applicationDbContext.SaveChangesAsync();
