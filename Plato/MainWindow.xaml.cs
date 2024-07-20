@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Plato.Constants;
 using Plato.DatabaseContext;
 using Plato.DatabaseContext.Entities;
+using Plato.Encryption;
 using Plato.ExternalServices;
 using Plato.Models;
 using Plato.Models.DTOs;
@@ -25,6 +26,7 @@ namespace Plato
         private readonly Dictionary<string, User> _users = [];
 
         private readonly ApplicationDbContext _applicationDbContext;
+        private readonly AesEncryption _aesEncryption;
 
         private string _currentChatUsername = ChatDefaultChannelNames.Server;
         private string? _token;
@@ -32,12 +34,13 @@ namespace Plato
         public ObservableCollection<string> CurrentChat { get; set; } = [];
         public ObservableCollection<User> Users { get; set; } = [];
 
-        public MainWindow(ApplicationDbContext applicationDbContext)
+        public MainWindow(ApplicationDbContext applicationDbContext, AesEncryption aesEncryption)
         {
             InitializeComponent();
             this.DataContext = this;
 
             _applicationDbContext = applicationDbContext;
+            _aesEncryption = aesEncryption;
 
             var serverUser = new User() { Name = ChatDefaultChannelNames.Server, HasNewMessage = false };
             _users.Add(ChatDefaultChannelNames.Server, serverUser);

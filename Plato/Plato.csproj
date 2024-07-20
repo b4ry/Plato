@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Plato.DatabaseContext\Plato.DatabaseContext.csproj" />
+    <ProjectReference Include="..\Plato.Encryption\Plato.Encryption.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Plato.DatabaseContext;
+using Plato.Encryption;
 using System;
 using System.Windows;
 
@@ -20,6 +21,7 @@ namespace Plato
         private static void ConfigureServices(ServiceCollection services)
         {
             services.AddDbContext<ApplicationDbContext>();
+            services.AddSingleton<AesEncryption>();
             services.AddSingleton<MainWindow>();
         }
 
