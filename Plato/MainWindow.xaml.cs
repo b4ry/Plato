@@ -93,13 +93,13 @@ namespace Plato
                         })
                         .ToListAsync();
 
-                    foreach(var chat in chats)
+                    foreach (var chat in chats)
                     {
                         if (!_chats.ContainsKey(chat.Username))
                         {
                             _chats[chat.Username] = [];
 
-                            foreach(var encryptedMessage in chat.Messages)
+                            foreach (var encryptedMessage in chat.Messages)
                             {
                                 var message = await _aesEncryptor.Decrypt(encryptedMessage);
 
@@ -172,7 +172,7 @@ namespace Plato
                     var encryptedSymmetricKey = _rsa.Encrypt(_aesEncryptor.Key, RSAEncryptionPadding.Pkcs1);
                     var encryptedSymmetricIV = _rsa.Encrypt(_aesEncryptor.IV, RSAEncryptionPadding.Pkcs1);
 
-                    await _connection.InvokeAsync(ChatHubEndpointNames.SendSymmetricKey, (encryptedSymmetricKey, encryptedSymmetricIV));
+                    await _connection.InvokeAsync(ChatHubEndpointNames.StoreSymmetricKey, (encryptedSymmetricKey, encryptedSymmetricIV));
                 });
             }));
         }
@@ -222,22 +222,30 @@ namespace Plato
             {
                 this.Dispatcher.Invoke(async () =>
                 {
-                    var newMessage = username != ChatDefaultChannelNames.Server ? $"{username}: {message}" : $"{message}";
-
                     if (!_chats.ContainsKey(username))
                     {
                         _chats.Add(username, []);
                     }
 
-                    _chats[username].Add(newMessage);
-                    await SaveNewMessage(newMessage);
+                    var newMessageEntity = new MessageEntity()
+                    {
+                        Username = _currentChatUsername,
+                        Message = message,
+                        Order = _chats[_currentChatUsername].Count
+                    };
+
+                    _applicationDbContext.Add(newMessageEntity);
+                    await _applicationDbContext.SaveChangesAsync();
+
+                    var decryptedMessage = await _aesEncryptor.Decrypt(message);
 
                     if (string.Equals(username, _currentChatUsername))
                     {
-                        CurrentChat.Add(newMessage);
+                        CurrentChat.Add(decryptedMessage);
                     }
                     else
                     {
+                        _chats[username].Add(decryptedMessage);
                         _users[username].HasNewMessage = true;
                     }
                 });

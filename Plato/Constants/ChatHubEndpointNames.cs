@@ -3,6 +3,6 @@
     internal class ChatHubEndpointNames
     {
         internal static readonly string SendMessage = "SendMessage";
-        internal static readonly string SendSymmetricKey = "SendSymmetricKey";
+        internal static readonly string StoreSymmetricKey = "StoreSymmetricKey";
     }
 }
