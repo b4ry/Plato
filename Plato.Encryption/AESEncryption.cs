@@ -1,9 +1,10 @@
 ﻿using System.Security.Cryptography;
 using System.Text;
+using Plato.Encryption.Interfaces;
 
 namespace Plato.Encryption
 {
-    public class AesEncryptor : IAesEncryptor, IDisposable
+    public class AESEncryption : IAESEncryption, IDisposable
     {
         private readonly Aes _aes;
         private readonly ICryptoTransform _aesEncryptor;
@@ -12,7 +13,7 @@ namespace Plato.Encryption
         public byte[] Key { get => _aes.Key; }
         public byte[] IV { get => _aes.IV; }
 
-        public AesEncryptor()
+        public AESEncryption()
         {
             _aes = Aes.Create();
 

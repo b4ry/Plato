@@ -23,7 +23,9 @@ namespace Plato
         {
             services.AddDbContext<ApplicationDbContext>();
 
-            services.AddScoped<AesEncryptor>();
+            services.AddScoped<AESEncryption>();
+            services.AddScoped<RSAEncryption>();
+
             services.AddSingleton<MainWindow>();
 
             services.AddHttpClient<IAuthenticationService, AuthenticationService>((client) =>

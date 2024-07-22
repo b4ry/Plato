@@ -10,7 +10,6 @@ using Plato.Models;
 using Plato.Models.DTOs;
 using System.Collections.ObjectModel;
 using System.Configuration;
-using System.Security.Cryptography;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -27,9 +26,9 @@ namespace Plato
         private readonly Dictionary<string, User> _users = [];
 
         private readonly ApplicationDbContext _applicationDbContext;
-        private readonly AesEncryptor _aesEncryptor;
+        private readonly AESEncryption _aesEncryption;
+        private readonly RSAEncryption _rsaEncryption;
         private readonly IAuthenticationService _authenticationService;
-        private readonly RSA _rsa;
 
         private string _currentChatUsername = ChatDefaultChannelNames.Server;
         private string? _token;
@@ -40,7 +39,8 @@ namespace Plato
         public MainWindow
             (
                 ApplicationDbContext applicationDbContext,
-                AesEncryptor aesEncryption,
+                AESEncryption aesEncryption,
+                RSAEncryption rsaEncryption,
                 IAuthenticationService authenticationService
             )
         {
@@ -48,9 +48,9 @@ namespace Plato
             this.DataContext = this;
 
             _applicationDbContext = applicationDbContext;
-            _aesEncryptor = aesEncryption;
+            _aesEncryption = aesEncryption;
+            _rsaEncryption = rsaEncryption;
             _authenticationService = authenticationService;
-            _rsa = RSA.Create();
 
             var serverUser = new User() { Name = ChatDefaultChannelNames.Server, HasNewMessage = false };
             _users.Add(ChatDefaultChannelNames.Server, serverUser);
@@ -101,7 +101,7 @@ namespace Plato
 
                             foreach (var encryptedMessage in chat.Messages)
                             {
-                                var message = await _aesEncryptor.Decrypt(encryptedMessage);
+                                var message = await _aesEncryption.Decrypt(encryptedMessage);
 
                                 _chats[chat.Username].Add(message);
                             }
@@ -137,7 +137,7 @@ namespace Plato
                 CurrentChat.Add(messageTextBox.Text);
                 _chats[_currentChatUsername].Add(messageTextBox.Text); // TODO: it should be possible to set a reference of this chat to current chat
 
-                await SaveNewMessage(messageTextBox.Text);
+                await SaveNewMessage(messageTextBox.Text, true);
 
                 await _connection.InvokeAsync(ChatHubEndpointNames.SendMessage, _currentChatUsername, messageTextBox.Text);
             }
@@ -166,11 +166,10 @@ namespace Plato
             {
                 this.Dispatcher.Invoke(async () =>
                 {
-                    // TODO: move all of this to some class
-                    _rsa.FromXmlString(asymmetricPublicKey);
+                    _rsaEncryption.FromXmlString(asymmetricPublicKey);
 
-                    var encryptedSymmetricKey = _rsa.Encrypt(_aesEncryptor.Key, RSAEncryptionPadding.Pkcs1);
-                    var encryptedSymmetricIV = _rsa.Encrypt(_aesEncryptor.IV, RSAEncryptionPadding.Pkcs1);
+                    var encryptedSymmetricKey = _rsaEncryption.Encrypt(_aesEncryption.Key);
+                    var encryptedSymmetricIV = _rsaEncryption.Encrypt(_aesEncryption.IV);
 
                     await _connection.InvokeAsync(ChatHubEndpointNames.StoreSymmetricKey, (encryptedSymmetricKey, encryptedSymmetricIV));
                 });
@@ -227,17 +226,9 @@ namespace Plato
                         _chats.Add(username, []);
                     }
 
-                    var newMessageEntity = new MessageEntity()
-                    {
-                        Username = _currentChatUsername,
-                        Message = message,
-                        Order = _chats[_currentChatUsername].Count
-                    };
+                    await SaveNewMessage(message, false);
 
-                    _applicationDbContext.Add(newMessageEntity);
-                    await _applicationDbContext.SaveChangesAsync();
-
-                    var decryptedMessage = await _aesEncryptor.Decrypt(message);
+                    var decryptedMessage = await _aesEncryption.Decrypt(message);
 
                     if (string.Equals(username, _currentChatUsername))
                     {
@@ -277,16 +268,17 @@ namespace Plato
 
         #endregion
 
-        private async Task SaveNewMessage(string newMessage)
+        private async Task SaveNewMessage(string newMessage, bool encrypt)
         {
             var newMessageEntity = new MessageEntity()
             {
                 Username = _currentChatUsername,
-                Message = await _aesEncryptor.Encrypt(newMessage),
+                Message = encrypt ? await _aesEncryption.Encrypt(newMessage) : newMessage,
                 Order = _chats[_currentChatUsername].Count
             };
 
             _applicationDbContext.Add(newMessageEntity);
+
             await _applicationDbContext.SaveChangesAsync();
         }
 
