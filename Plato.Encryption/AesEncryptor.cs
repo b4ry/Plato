@@ -9,6 +9,9 @@ namespace Plato.Encryption
         private readonly ICryptoTransform _aesEncryptor;
         private readonly ICryptoTransform _aesDecryptor;
 
+        public byte[] Key { get => _aes.Key; }
+        public byte[] IV { get => _aes.IV; }
+
         public AesEncryptor()
         {
             _aes = Aes.Create();

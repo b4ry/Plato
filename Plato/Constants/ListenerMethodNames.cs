@@ -7,5 +7,6 @@
         internal static readonly string UserJoinsChat = "UserJoinsChat";
         internal static readonly string GetUsers = "GetUsers";
         internal static readonly string UserLogsOut = "UserLogsOut";
+        internal static readonly string GetAsymmetricPublicKey = "GetAsymmetricPublicKey";
     }
 }

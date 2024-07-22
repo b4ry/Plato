@@ -10,6 +10,7 @@ using Plato.Models;
 using Plato.Models.DTOs;
 using System.Collections.ObjectModel;
 using System.Configuration;
+using System.Security.Cryptography;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -28,6 +29,7 @@ namespace Plato
         private readonly ApplicationDbContext _applicationDbContext;
         private readonly AesEncryptor _aesEncryptor;
         private readonly IAuthenticationService _authenticationService;
+        private readonly RSA _rsa;
 
         private string _currentChatUsername = ChatDefaultChannelNames.Server;
         private string? _token;
@@ -48,6 +50,7 @@ namespace Plato
             _applicationDbContext = applicationDbContext;
             _aesEncryptor = aesEncryption;
             _authenticationService = authenticationService;
+            _rsa = RSA.Create();
 
             var serverUser = new User() { Name = ChatDefaultChannelNames.Server, HasNewMessage = false };
             _users.Add(ChatDefaultChannelNames.Server, serverUser);
@@ -154,19 +157,37 @@ namespace Plato
             RegisterUserJoinsChatListener();
             RegisterUserLogsOutListener();
             RegisterGetUsersListener();
+            RegisterGetAsymmetricPublicKeyListener();
+        }
+
+        private void RegisterGetAsymmetricPublicKeyListener()
+        {
+            _connection.On(ListenerMethodNames.GetAsymmetricPublicKey, (Action<string>)((asymmetricPublicKey) =>
+            {
+                this.Dispatcher.Invoke(async () =>
+                {
+                    // TODO: move all of this to some class
+                    _rsa.FromXmlString(asymmetricPublicKey);
+
+                    var encryptedSymmetricKey = _rsa.Encrypt(_aesEncryptor.Key, RSAEncryptionPadding.Pkcs1);
+                    var encryptedSymmetricIV = _rsa.Encrypt(_aesEncryptor.IV, RSAEncryptionPadding.Pkcs1);
+
+                    await _connection.InvokeAsync(ChatHubEndpointNames.SendSymmetricKey, (encryptedSymmetricKey, encryptedSymmetricIV));
+                });
+            }));
         }
 
         private void RegisterGetUsersListener()
         {
             _connection.On(ListenerMethodNames.GetUsers, (Action<IEnumerable<string>>)((users) =>
             {
-                this.Dispatcher.Invoke((Delegate)(() =>
+                this.Dispatcher.Invoke(() =>
                 {
                     foreach (var username in users)
                     {
                         AddNewUser(username);
                     }
-                }));
+                });
             }));
         }
 
@@ -285,6 +306,7 @@ namespace Plato
                 CurrentChat.Add(message);
             }
         }
+
         private void AddNewUser(string username)
         {
             var newUser = new User() { Name = username, HasNewMessage = false };
