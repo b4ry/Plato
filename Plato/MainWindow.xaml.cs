@@ -1,13 +1,13 @@
 ﻿using Microsoft.AspNetCore.SignalR.Client;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Plato.Constants;
 using Plato.DatabaseContext;
 using Plato.DatabaseContext.Entities;
-using Plato.Encryption;
+using Plato.Encryption.Interfaces;
 using Plato.ExternalServices;
 using Plato.Models;
 using Plato.Models.DTOs;
+using Plato.Services;
 using System.Collections.ObjectModel;
 using System.Configuration;
 using System.Windows;
@@ -22,13 +22,13 @@ namespace Plato
     {
         private readonly HubConnection _connection;
 
-        private readonly Dictionary<string, IList<string>> _chats = [];
         private readonly Dictionary<string, User> _users = [];
 
         private readonly ApplicationDbContext _applicationDbContext;
-        private readonly AESEncryption _aesEncryption;
-        private readonly RSAEncryption _rsaEncryption;
+        private readonly IAESEncryption _aesEncryption;
+        private readonly IRSAEncryption _rsaEncryption;
         private readonly IAuthenticationService _authenticationService;
+        private readonly IChatHelper _chatHelper;
 
         private string _currentChatUsername = ChatDefaultChannelNames.Server;
         private string? _token;
@@ -39,9 +39,10 @@ namespace Plato
         public MainWindow
             (
                 ApplicationDbContext applicationDbContext,
-                AESEncryption aesEncryption,
-                RSAEncryption rsaEncryption,
-                IAuthenticationService authenticationService
+                IAESEncryption aesEncryption,
+                IRSAEncryption rsaEncryption,
+                IAuthenticationService authenticationService,
+                IChatHelper chatHelper
             )
         {
             InitializeComponent();
@@ -51,6 +52,7 @@ namespace Plato
             _aesEncryption = aesEncryption;
             _rsaEncryption = rsaEncryption;
             _authenticationService = authenticationService;
+            _chatHelper = chatHelper;
 
             var serverUser = new User() { Name = ChatDefaultChannelNames.Server, HasNewMessage = false };
             _users.Add(ChatDefaultChannelNames.Server, serverUser);
@@ -84,29 +86,7 @@ namespace Plato
                     SetAuthFieldsVisibility(Visibility.Hidden);
                     SetChatFieldsVisibility(Visibility.Visible);
 
-                    var chats = await _applicationDbContext.Messages
-                        .GroupBy(message => message.Username)
-                        .Select(group => new
-                        {
-                            Username = group.Key,
-                            Messages = group.OrderBy(g => g.Order).Select(g => g.Message).ToList()
-                        })
-                        .ToListAsync();
-
-                    foreach (var chat in chats)
-                    {
-                        if (!_chats.ContainsKey(chat.Username))
-                        {
-                            _chats[chat.Username] = [];
-
-                            foreach (var encryptedMessage in chat.Messages)
-                            {
-                                var message = await _aesEncryption.Decrypt(encryptedMessage);
-
-                                _chats[chat.Username].Add(message);
-                            }
-                        }
-                    }
+                    await _chatHelper.LoadChats();
 
                     usersList.SelectedItem = _users[_currentChatUsername];
                 }
@@ -135,7 +115,7 @@ namespace Plato
             try
             {
                 CurrentChat.Add(messageTextBox.Text);
-                _chats[_currentChatUsername].Add(messageTextBox.Text); // TODO: it should be possible to set a reference of this chat to current chat
+                _chatHelper.AddMessageToChat(_currentChatUsername, messageTextBox.Text);
 
                 await SaveNewMessage(messageTextBox.Text, true);
 
@@ -166,7 +146,7 @@ namespace Plato
             {
                 this.Dispatcher.Invoke(async () =>
                 {
-                    _rsaEncryption.FromXmlString(asymmetricPublicKey);
+                    _rsaEncryption.BuildFromXmlString(asymmetricPublicKey);
 
                     var encryptedSymmetricKey = _rsaEncryption.Encrypt(_aesEncryption.Key);
                     var encryptedSymmetricIV = _rsaEncryption.Encrypt(_aesEncryption.IV);
@@ -221,10 +201,7 @@ namespace Plato
             {
                 this.Dispatcher.Invoke(async () =>
                 {
-                    if (!_chats.ContainsKey(username))
-                    {
-                        _chats.Add(username, []);
-                    }
+                    _chatHelper.AddChat(username);
 
                     await SaveNewMessage(message, false);
 
@@ -236,7 +213,7 @@ namespace Plato
                     }
                     else
                     {
-                        _chats[username].Add(decryptedMessage);
+                        _chatHelper.AddMessageToChat(username, decryptedMessage);
                         _users[username].HasNewMessage = true;
                     }
                 });
@@ -274,7 +251,7 @@ namespace Plato
             {
                 Username = _currentChatUsername,
                 Message = encrypt ? await _aesEncryption.Encrypt(newMessage) : newMessage,
-                Order = _chats[_currentChatUsername].Count
+                Order = _chatHelper.GetChatMessageCount(_currentChatUsername)
             };
 
             _applicationDbContext.Add(newMessageEntity);
@@ -296,12 +273,9 @@ namespace Plato
 
             CurrentChat.Clear();
 
-            if (!_chats.ContainsKey(_currentChatUsername))
-            {
-                _chats.Add(_currentChatUsername, []);
-            }
+            _chatHelper.AddChat(_currentChatUsername);
 
-            foreach (var message in _chats[_currentChatUsername])
+            foreach (var message in _chatHelper.GetChat(_currentChatUsername))
             {
                 CurrentChat.Add(message);
             }

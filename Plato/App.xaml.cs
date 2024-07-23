@@ -2,7 +2,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Plato.DatabaseContext;
 using Plato.Encryption;
+using Plato.Encryption.Interfaces;
 using Plato.ExternalServices;
+using Plato.Services;
 using System.Configuration;
 using System.Windows;
 
@@ -23,8 +25,9 @@ namespace Plato
         {
             services.AddDbContext<ApplicationDbContext>();
 
-            services.AddScoped<AESEncryption>();
-            services.AddScoped<RSAEncryption>();
+            services.AddScoped<IAESEncryption, AESEncryption>();
+            services.AddScoped<IRSAEncryption, RSAEncryption>();
+            services.AddScoped<IChatHelper, ChatHelper>();
 
             services.AddSingleton<MainWindow>();
 

@@ -12,7 +12,7 @@ namespace Plato.Encryption
             _rsa = RSA.Create();
         }
 
-        public void FromXmlString(string asymmetricPublicKey)
+        public void BuildFromXmlString(string asymmetricPublicKey)
         {
             _rsa.FromXmlString(asymmetricPublicKey);
         }
