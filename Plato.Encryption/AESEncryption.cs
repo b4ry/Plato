@@ -1,39 +1,23 @@
-﻿using System.Security.Cryptography;
+﻿using Plato.Encryption.Interfaces;
+using System.Security.Cryptography;
 using System.Text;
-using Plato.Encryption.Interfaces;
 
 namespace Plato.Encryption
 {
     public class AESEncryption : IAESEncryption, IDisposable
     {
-        private readonly Aes _aes;
-        private readonly ICryptoTransform _aesEncryptor;
-        private readonly ICryptoTransform _aesDecryptor;
+        private Aes? _aes;
+        private ICryptoTransform? _aesEncryptor;
+        private ICryptoTransform? _aesDecryptor;
 
-        public byte[] Key { get => _aes.Key; }
-        public byte[] IV { get => _aes.IV; }
+        public byte[] Key { get => _aes!.Key; }
+        public byte[] IV { get => _aes!.IV; }
 
-        public AESEncryption()
+        public async Task Create(string password)
         {
             _aes = Aes.Create();
 
-            if (!File.Exists(Path.Combine(Constants.Constants.AesInitialVectorFileName)))
-            {
-                SaveToFile(Constants.Constants.AesInitialVectorFileName, _aes.IV, _aes.IV.Length);
-            }
-            else
-            {
-                _aes.IV = ReadFromFile(Constants.Constants.AesInitialVectorFileName, _aes.IV.Length);
-            }
-
-            if (!File.Exists(Path.Combine(Constants.Constants.AesEncryptionKeyFileName)))
-            {
-                SaveToFile(Constants.Constants.AesEncryptionKeyFileName, _aes.Key, _aes.Key.Length);
-            }
-            else
-            {
-                _aes.Key = ReadFromFile(Constants.Constants.AesEncryptionKeyFileName, _aes.Key.Length);
-            }
+            (_aes.IV, _aes.Key) = await ZipFileHelper.GetAesParameters(_aes, password);
 
             _aesEncryptor = _aes.CreateEncryptor();
             _aesDecryptor = _aes.CreateDecryptor();
@@ -44,7 +28,7 @@ namespace Plato.Encryption
             byte[] textBytes = Encoding.UTF8.GetBytes(text);
 
             using MemoryStream ms = new();
-            using (CryptoStream cs = new(ms, _aesEncryptor, CryptoStreamMode.Write))
+            using (CryptoStream cs = new(ms, _aesEncryptor!, CryptoStreamMode.Write))
             {
                 await cs.WriteAsync(textBytes);
             }
@@ -57,43 +41,12 @@ namespace Plato.Encryption
             byte[] encryptedBytes = Convert.FromBase64String(encryptedText);
 
             using MemoryStream ms = new();
-            using (CryptoStream cs = new(ms, _aesDecryptor, CryptoStreamMode.Write))
+            using (CryptoStream cs = new(ms, _aesDecryptor!, CryptoStreamMode.Write))
             {
                 await cs.WriteAsync(encryptedBytes);
             }
 
             return Encoding.UTF8.GetString(ms.ToArray());
-        }
-
-        private void SaveToFile(string fileName, byte[] bytes, int bytesToWrite)
-        {
-            FileStream fileStream = new(Path.Combine(fileName), FileMode.OpenOrCreate);
-
-            fileStream.WriteAsync(bytes, 0, bytesToWrite);
-        }
-
-        private static byte[] ReadFromFile(string fileName, int bytesToRead)
-        {
-            byte[] bytes = new byte[bytesToRead];
-
-            int numBytesRead = 0;
-
-            while (bytesToRead > 0)
-            {
-                using FileStream fileStream = new(Path.Combine(fileName), FileMode.Open);
-
-                int n = fileStream.Read(bytes, numBytesRead, bytesToRead);
-
-                if (n == 0)
-                {
-                    break;
-                }
-
-                numBytesRead += n;
-                bytesToRead -= n;
-            }
-
-            return bytes;
         }
 
         public void Dispose()
@@ -108,8 +61,8 @@ namespace Plato.Encryption
             {
                 if (_aes != null)
                 {
-                    _aesEncryptor.Dispose();
-                    _aesDecryptor.Dispose();
+                    _aesEncryptor!.Dispose();
+                    _aesDecryptor!.Dispose();
                     _aes.Dispose();
                 }
             }

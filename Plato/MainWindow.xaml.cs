@@ -79,6 +79,8 @@ namespace Plato
 
                 if (_token != null)
                 {
+                    await _aesEncryption.Create(passwordBox.Password);
+
                     RegisterListeners();
 
                     await _connection.StartAsync();
