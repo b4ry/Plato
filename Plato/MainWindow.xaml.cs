@@ -150,8 +150,8 @@ namespace Plato
                 {
                     _rsaEncryption.BuildFromXmlString(asymmetricPublicKey);
 
-                    var encryptedSymmetricKey = _rsaEncryption.Encrypt(_aesEncryption.Key);
-                    var encryptedSymmetricIV = _rsaEncryption.Encrypt(_aesEncryption.IV);
+                    var encryptedSymmetricKey = Convert.ToBase64String(_rsaEncryption.Encrypt(_aesEncryption.Key));
+                    var encryptedSymmetricIV = Convert.ToBase64String(_rsaEncryption.Encrypt(_aesEncryption.IV));
 
                     await _connection.InvokeAsync(ChatHubEndpointNames.StoreSymmetricKey, (encryptedSymmetricKey, encryptedSymmetricIV));
                 });
