@@ -119,9 +119,10 @@ namespace Plato
                 CurrentChat.Add(messageTextBox.Text);
                 _chatHelper.AddMessageToChat(_currentChatUsername, messageTextBox.Text);
 
-                await SaveNewMessage(messageTextBox.Text, true);
+                var encryptedMessage = await _aesEncryption.Encrypt(messageTextBox.Text);
+                await SaveNewMessage(encryptedMessage);
 
-                await _connection.InvokeAsync(ChatHubEndpointNames.SendMessage, _currentChatUsername, messageTextBox.Text);
+                await _connection.InvokeAsync(ChatHubEndpointNames.SendMessage, _currentChatUsername, encryptedMessage);
             }
             catch (Exception ex)
             {
@@ -205,7 +206,7 @@ namespace Plato
                 {
                     _chatHelper.AddChat(username);
 
-                    await SaveNewMessage(message, false);
+                    await SaveNewMessage(message);
 
                     var decryptedMessage = await _aesEncryption.Decrypt(message);
 
@@ -247,12 +248,12 @@ namespace Plato
 
         #endregion
 
-        private async Task SaveNewMessage(string newMessage, bool encrypt)
+        private async Task SaveNewMessage(string newMessage)
         {
             var newMessageEntity = new MessageEntity()
             {
                 Username = _currentChatUsername,
-                Message = encrypt ? await _aesEncryption.Encrypt(newMessage) : newMessage,
+                Message =newMessage,
                 Order = _chatHelper.GetChatMessageCount(_currentChatUsername)
             };
 
